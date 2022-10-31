@@ -187,7 +187,7 @@ def extract_rets_pos_txn_from_zipline(backtest):
 
 
 def print_table(
-    table, name=None, float_format=None, formatters=None, header_rows=None
+    table, name=None, float_format=None, formatters=None, header_rows=None, is_cli=None
 ):
     """
     Pretty print a pandas DataFrame.
@@ -210,6 +210,8 @@ def print_table(
         pd.Dataframe.to_html.
     header_rows : dict, optional
         Extra rows to display at the top of the table.
+    is_cli  : None, Bool, optional
+        Printing test on command line interface
     """
 
     if isinstance(table, pd.Series):
@@ -218,7 +220,12 @@ def print_table(
     if name is not None:
         table.columns.name = name
 
-    html = table.to_html(float_format=float_format, formatters=formatters)
+    if is_cli and (is_cli is not None) :
+        import pprint as pp
+        pp.pprint(table)
+        return
+    else:
+        html = table.to_html(float_format=float_format, formatters=formatters)
 
     if header_rows is not None:
         # Count the number of columns for the text to span

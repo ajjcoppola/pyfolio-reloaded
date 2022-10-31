@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import datetime
-import calendar
 from collections import OrderedDict
 from functools import wraps
 
@@ -166,10 +165,6 @@ def plot_monthly_returns_heatmap(returns, ax=None, **kwargs):
     monthly_ret_table = ep.aggregate_returns(returns, "monthly")
     monthly_ret_table = monthly_ret_table.unstack().round(3)
 
-    monthly_ret_table.rename(
-        columns={i: m for i, m in enumerate(calendar.month_abbr)}, inplace=True
-    )
-
     sns.heatmap(
         monthly_ret_table.fillna(0) * 100.0,
         annot=True,
@@ -218,15 +213,15 @@ def plot_annual_returns(returns, ax=None, **kwargs):
 
     ax.axvline(
         100 * ann_ret_df.values.mean(),
-        color="red",
+        color="steelblue",
         linestyle="--",
-        lw=1,
+        lw=4,
         alpha=0.7,
     )
     (100 * ann_ret_df.sort_index(ascending=False)).plot(
         ax=ax, kind="barh", alpha=0.70, **kwargs
     )
-    ax.axvline(0.0, color="black", linestyle="-", lw=2)
+    ax.axvline(0.0, color="black", linestyle="-", lw=3)
 
     ax.set_ylabel("Year")
     ax.set_xlabel("Returns")
@@ -266,7 +261,7 @@ def plot_monthly_returns_dist(returns, ax=None, **kwargs):
 
     ax.hist(
         100 * monthly_ret_table,
-        color="steelblue",
+        color="orangered",
         alpha=0.80,
         bins=20,
         **kwargs,
@@ -274,13 +269,13 @@ def plot_monthly_returns_dist(returns, ax=None, **kwargs):
 
     ax.axvline(
         100 * monthly_ret_table.mean(),
-        color="red",
+        color="gold",
         linestyle="--",
-        lw=1,
+        lw=4,
         alpha=1.0,
     )
 
-    ax.axvline(0.0, color="black", linestyle="-", lw=1, alpha=0.75)
+    ax.axvline(0.0, color="black", linestyle="-", lw=3, alpha=0.75)
     ax.legend(["Mean"], frameon=True, framealpha=0.5)
     ax.set_ylabel("Number of months")
     ax.set_xlabel("Returns")
@@ -490,7 +485,7 @@ def plot_drawdown_underwater(returns, ax=None, **kwargs):
     df_cum_rets = ep.cum_returns(returns, starting_value=1.0)
     running_max = np.maximum.accumulate(df_cum_rets)
     underwater = -100 * ((running_max - df_cum_rets) / running_max)
-    underwater.plot(ax=ax, kind="area", color="salmon", alpha=0.7, **kwargs)
+    (underwater).plot(ax=ax, kind="area", color="coral", alpha=0.7, **kwargs)
     ax.set_ylabel("Drawdown")
     ax.set_title("Underwater plot")
     ax.set_xlabel("")
@@ -552,6 +547,7 @@ def show_perf_stats(
     live_start_date=None,
     bootstrap=False,
     header_rows=None,
+    is_cli=None,
 ):
     """
     Prints some performance metrics of the strategy.
@@ -686,6 +682,7 @@ def show_perf_stats(
         perf_stats,
         float_format="{0:.2f}".format,
         header_rows=header_rows,
+        is_cli=is_cli,
     )
 
 
@@ -807,7 +804,7 @@ def plot_rolling_returns(
 
     if volatility_match and factor_returns is None:
         raise ValueError(
-            "volatility_match requires passing of factor_returns."
+            "volatility_match requires passing of " "factor_returns."
         )
     elif volatility_match and factor_returns is not None:
         bmark_vol = factor_returns.loc[returns.index].std()
@@ -840,12 +837,12 @@ def plot_rolling_returns(
         oos_cum_returns = pd.Series([])
 
     is_cum_returns.plot(
-        lw=2, color="forestgreen", alpha=0.6, label="Backtest", ax=ax, **kwargs
+        lw=3, color="forestgreen", alpha=0.6, label="Backtest", ax=ax, **kwargs
     )
 
     if len(oos_cum_returns) > 0:
         oos_cum_returns.plot(
-            lw=2, color="red", alpha=0.6, label="Live", ax=ax, **kwargs
+            lw=4, color="red", alpha=0.6, label="Live", ax=ax, **kwargs
         )
 
         if cone_std is not None:
@@ -872,7 +869,7 @@ def plot_rolling_returns(
 
     if legend_loc is not None:
         ax.legend(loc=legend_loc, frameon=True, framealpha=0.5)
-    ax.axhline(1.0, linestyle="--", color="black", lw=1)
+    ax.axhline(1.0, linestyle="--", color="black", lw=2)
 
     return ax
 
@@ -916,22 +913,17 @@ def plot_rolling_beta(
     rb_1 = timeseries.rolling_beta(
         returns, factor_returns, rolling_window=APPROX_BDAYS_PER_MONTH * 6
     )
-    rb_1.plot(color="steelblue", lw=2, alpha=0.6, ax=ax, **kwargs)
+    rb_1.plot(color="steelblue", lw=3, alpha=0.6, ax=ax, **kwargs)
     rb_2 = timeseries.rolling_beta(
         returns, factor_returns, rolling_window=APPROX_BDAYS_PER_MONTH * 12
     )
-    rb_2.plot(color="grey", lw=2, alpha=0.4, ax=ax, **kwargs)
-    ax.axhline(rb_1.mean(), color="steelblue", linestyle="--", lw=2)
-    ax.axhline(1.0, color="black", linestyle="--", lw=1)
+    rb_2.plot(color="grey", lw=3, alpha=0.4, ax=ax, **kwargs)
+    ax.axhline(rb_1.mean(), color="steelblue", linestyle="--", lw=3)
+    ax.axhline(0.0, color="black", linestyle="-", lw=2)
 
     ax.set_xlabel("")
-    ax.legend(
-        ["6-mo", "12-mo", "6-mo Average"],
-        loc=legend_loc,
-        frameon=True,
-        framealpha=0.5,
-    )
-    # ax.set_ylim((-0.5, 1.5))
+    ax.legend(["6-mo", "12-mo"], loc=legend_loc, frameon=True, framealpha=0.5)
+    ax.set_ylim((-1.0, 1.0))
     return ax
 
 
@@ -978,19 +970,19 @@ def plot_rolling_volatility(
     ax.yaxis.set_major_formatter(FuncFormatter(y_axis_formatter))
 
     rolling_vol_ts = timeseries.rolling_volatility(returns, rolling_window)
-    rolling_vol_ts.plot(alpha=0.7, lw=2, color="orangered", ax=ax, **kwargs)
+    rolling_vol_ts.plot(alpha=0.7, lw=3, color="orangered", ax=ax, **kwargs)
     if factor_returns is not None:
         rolling_vol_ts_factor = timeseries.rolling_volatility(
             factor_returns, rolling_window
         )
         rolling_vol_ts_factor.plot(
-            alpha=0.7, lw=2, color="grey", ax=ax, **kwargs
+            alpha=0.7, lw=3, color="grey", ax=ax, **kwargs
         )
 
     ax.set_title("Rolling volatility (6-month)")
-    ax.axhline(rolling_vol_ts.mean(), color="steelblue", linestyle="--", lw=2)
+    ax.axhline(rolling_vol_ts.mean(), color="steelblue", linestyle="--", lw=3)
 
-    ax.axhline(0.0, color="black", linestyle="--", lw=1, zorder=2)
+    ax.axhline(0.0, color="black", linestyle="-", lw=2)
 
     ax.set_ylabel("Volatility")
     ax.set_xlabel("")
@@ -1054,21 +1046,21 @@ def plot_rolling_sharpe(
     ax.yaxis.set_major_formatter(FuncFormatter(y_axis_formatter))
 
     rolling_sharpe_ts = timeseries.rolling_sharpe(returns, rolling_window)
-    rolling_sharpe_ts.plot(alpha=0.7, lw=2, color="orangered", ax=ax, **kwargs)
+    rolling_sharpe_ts.plot(alpha=0.7, lw=3, color="orangered", ax=ax, **kwargs)
 
     if factor_returns is not None:
         rolling_sharpe_ts_factor = timeseries.rolling_sharpe(
             factor_returns, rolling_window
         )
         rolling_sharpe_ts_factor.plot(
-            alpha=0.7, lw=2, color="grey", ax=ax, **kwargs
+            alpha=0.7, lw=3, color="grey", ax=ax, **kwargs
         )
 
     ax.set_title("Rolling Sharpe ratio (6-month)")
     ax.axhline(
-        rolling_sharpe_ts.mean(), color="steelblue", linestyle="--", lw=2
+        rolling_sharpe_ts.mean(), color="steelblue", linestyle="--", lw=3
     )
-    ax.axhline(0.0, color="black", linestyle="--", lw=1, zorder=2)
+    ax.axhline(0.0, color="black", linestyle="-", lw=3)
 
     ax.set_ylabel("Sharpe ratio")
     ax.set_xlabel("")
@@ -2107,7 +2099,7 @@ def plot_cones(
     # Plot returns line graph
     label = "Cumulative returns = {:.2f}%".format((returns.iloc[-1] - 1) * 100)
     axes.plot(
-        returns.index, returns.values, color="black", lw=2.0, label=label
+        returns.index, returns.values, color="black", lw=3.0, label=label
     )
 
     if name is not None:
